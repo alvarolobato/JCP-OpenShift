@@ -1,0 +1,257 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "jcp-jenkins",
+    "creationTimestamp": null,
+    "annotations": {
+      "description": "Deployment template for JCP Jenkins",
+      "iconClass": "icon-jenkins",
+      "tags": "instant-app, JCP, java, jenkins"
+    }
+  },
+  "objects": [
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    },
+                    {
+                        "name": "50000-tcp",
+                        "protocol": "TCP",
+                        "port": 50000,
+                        "targetPort": 50000
+                    }
+                ],
+                "selector": {
+                    "app": "jenkins",
+                    "deploymentconfig": "jenkins"
+                }
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+          "kind": "Route",
+          "apiVersion": "v1",
+          "metadata": {
+            "name": "jenkins-route",
+            "creationTimestamp": null
+          },
+          "spec": {
+            "host": "jenkins.openshift.beesshop.org",
+            "to": {
+              "kind": "Service",
+              "name": "jenkins"
+             },
+             "port": {
+              "targetPort": "8080-tcp"
+             }
+          }
+        },
+
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins"
+                },
+                "annotations": {
+                }
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "latest",
+                        "annotations": {
+                            "openshift.io/imported-from": "csanchez/jenkins-for-volumes"
+                        },
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "csanchez/jenkins-for-volumes"
+                        },
+                        "generation": null,
+                        "importPolicy": {}
+                    }
+                ]
+            },
+            "status": {
+                "dockerImageRepository": ""
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins"
+                },
+                "annotations": {
+                    "openshift.io/generated-by": "OpenShiftNewApp"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "resources": {}
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "jenkins"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "jenkins:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "test": false,
+                "selector": {
+                    "app": "jenkins",
+                    "deploymentconfig": "jenkins"
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "jenkins",
+                            "deploymentconfig": "jenkins"
+                        },
+                        "annotations": {
+                            "openshift.io/generated-by": "OpenShiftNewApp"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "jenkins-volume-1",
+                                "persistentVolumeClaim":{
+                                    "claimName": "jenkins-claim"
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "jenkins",
+                                "image": "csanchez/jenkins-for-volumes",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "containerPort": 50000,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {},
+                                "volumeMounts": [
+                                    {
+                                        "name": "jenkins-volume-1",
+                                        "mountPath": "/var/jenkins_home"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "status": {}
+        },
+
+        {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins-claim",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "1Gi"
+                    }
+                }
+            },
+            "status": {}
+        }
+    ],
+  "parameters": [
+    {
+      "name": "ADMIN_USERNAME",
+      "description": "administrator username",
+      "generate": "expression",
+      "from": "admin[A-Z0-9]{3}"
+    },
+    {
+      "name": "ADMIN_PASSWORD",
+      "description": "administrator password",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{8}"
+    },
+    {
+      "name": "MYSQL_USER",
+      "description": "database username",
+      "generate": "expression",
+      "from": "user[A-Z0-9]{3}"
+    },
+    {
+      "name": "MYSQL_PASSWORD",
+      "description": "database password",
+      "generate": "expression",
+      "from": "[a-zA-Z0-9]{8}"
+    },
+    {
+      "name": "MYSQL_DATABASE",
+      "description": "database name",
+      "value": "root"
+    },
+    {
+      "name": "GIT_REPO",
+      "description": "Git Repository with application source code",
+      "value": "https://github.com/CloudBees-community/MoviePlex-OpenShift-Example.git"
+    },
+    {
+      "name": "PUBLIC_URL",
+      "description": "Public URL to map the application",
+      "value": "movieplex.openshift.beesshop.org"
+    }
+    
+  ],
+  "labels": {
+    "template": "jenkins"
+  }
+}

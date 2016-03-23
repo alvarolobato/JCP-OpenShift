@@ -1,0 +1,10 @@
+kind: "PersistentVolume"
+metadata:
+  name: "vol8" 
+spec:
+  capacity:
+    storage: "2Gi" 
+  accessModes:
+    - "ReadWriteOnce"
+  hostPath: 
+    path: "/opt/data/vol8"

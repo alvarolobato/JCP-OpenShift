@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: jenkins-slave
+  namespace: jke-for-vols
+  selfLink: /oapi/v1/namespaces/jke-for-vols/deploymentconfigs/jenkins-slave
+  uid: c1094e10-ec51-11e5-8b10-22000a7b8cdf
+  resourceVersion: '195329'
+  creationTimestamp: '2016-03-17T15:05:57Z'
+  labels:
+    app: jenkins-slave
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {  }
+  triggers:
+    -
+      type: ConfigChange
+    -
+      type: ImageChange
+      imageChangeParams:
+        automatic: true
+        containerNames:
+          - jenkins-slave
+        from:
+          kind: ImageStreamTag
+          name: 'jnlp-slave:latest'
+        lastTriggeredImage: 'cloudbees/jnlp-slave-with-java-build-tools@sha256:4e2231b9a47d12b5d3cbbde3fa7804d611d5c17be2b705c697038331ac2926a3'
+  replicas: 0
+  test: false
+  selector:
+    jenkins: slave
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: jenkins-slave
+        deploymentconfig: jenkins-slave
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+    spec:
+      volumes:
+        -
+          name: jenkins-slave-volume-1
+          emptyDir: {  }
+      containers:
+        -
+          name: jenkins-slave
+          image: 'cloudbees/jenkins-slave-with-java-build-tools@sha256:4e2231b9a47d12b5d3cbbde3fa7804d611d5c17be2b705c697038331ac2926a3'
+          args:
+            - '-url'
+            - 'http://172.17.0.28:8080/'
+            - ffdba974e800790b4e918232d881822ac526d23b4c8adca165cc4fc09b26a7e3
+            - test-os
+          resources: {  }
+          volumeMounts:
+            -
+              name: jenkins-slave-volume-1
+              mountPath: /home/jenkins
+          terminationMessagePath: /dev/termination-log
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {  }
+status:
+  latestVersion: 6
+  details:
+    causes:
+      -
+        type: ImageChange
+        imageTrigger:
+          from:
+            kind: ImageStreamTag
+            name: 'jenkins-slave:latest'
