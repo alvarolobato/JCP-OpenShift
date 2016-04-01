@@ -1,7 +1,8 @@
 Cloudbees Jenkins Platform Openshift Templates
 ==============================================
 
-These are the templates and instructions to install Cloudbees Jenkins Platform on Openshift V3 platform. The templates work for the Origin open-source version and for the enterprise version.
+These are the templates and instructions to install Cloudbees Jenkins Platform on Openshift V3 platform. The templates work for the Origin open-source version and for the Red Hat Enterprise version (Dedicated and On-Premise).
+
 Basic knowledge of the Openshift CLI and the Openshift platform is required.
 * [Openshift platform documentation](https://docs.openshift.org/latest/welcome/index.html)
 * [Getting started with Openshift CLI](https://docs.openshift.org/latest/cli_reference/get_started_cli.html)
@@ -11,8 +12,7 @@ The base topology supported by these templates is as follows:
 * 1 Cloudbees Jenkins Operations Center (CJOC)
 * 1 Elastic Search
 * *unlimited* Cloudbees Jenkins Enterprise (CJE)
-* Dynamic Pod agents configured at CJ E level
-
+* Dynamic Pod agents configured at CJE level
 
 
 
@@ -50,7 +50,8 @@ The base topology supported by these templates is as follows:
 
 ## Install templates
 
-Templates are going to be installed on the newly created project, but could be installed on the _default_ project to make it available to any other project on the platform.
+On this example, templates are going to be installed on the newly created project, but could be installed on the _default_ project to make it available to any other project on the platform.
+
 There are two template files:
 
 * _cjp-joc-elastic-search-base-images.json_ contains JOC components, Elastic Search components and ImageStreams for CJOC, Elastic Search and CJE.
