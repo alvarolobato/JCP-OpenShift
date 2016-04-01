@@ -1,7 +1,7 @@
 Cloudbees Jenkins Platform Openshift Templates
 ==============================================
 
-These are the templates and instructions to install Cloudbees Jenkins Platform on Openshift V3 platform. The templates work for the Origin open-source version and for the Red Hat Enterprise version (Dedicated and On-Premise).
+These are the templates and instructions to install Cloudbees Jenkins Platform on Openshift V3. These templates are compatible with Openshift Origin open-source version and the Red Hat Enterprise versions Dedicated and On-Premise.
 
 Basic knowledge of the Openshift CLI and the Openshift platform is required.
 * [Openshift platform documentation](https://docs.openshift.org/latest/welcome/index.html)
