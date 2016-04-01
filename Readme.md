@@ -100,6 +100,7 @@ The applications services will be created and deployed. Optionally PUBLIC_URL, C
 Once the application is deployed and running you can access it from the URL defined for the service. This URL can be found on the overview page of the console.
 
 _**Notice** - Creating more tan one CJOC application on the same project is not supported._
+
 _**Tip** - Elastic Search comes with the standard [elasticsearch](https://hub.docker.com/_/elasticsearch/) Docker Image configuration, which may be enough for most cases. Please refer to [image readme file](https://hub.docker.com/_/elasticsearch/) for instructions o how to customize it._
 
 ### Configure CJP to use Elastic Search service
