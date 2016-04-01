@@ -67,36 +67,6 @@
              }
           }
         },
-
-        {
-            "kind": "ImageStream",
-            "apiVersion": "v1",
-            "metadata": {
-                "name": "jenkins-enterprise",
-                "creationTimestamp": null,
-                "labels": {
-                    "app": "jenkins-enterprise"
-                },
-                "annotations": {
-                }
-            },
-            "spec": {
-                "tags": [
-                    {
-                        "name": "latest",
-                        "from": {
-                            "kind": "DockerImage",
-                            "name": "csanchez/jenkins-for-volumes"
-                        },
-                        "generation": null,
-                        "importPolicy": {}
-                    }
-                ]
-            },
-            "status": {
-                "dockerImageRepository": ""
-            }
-        },
         {
             "kind": "DeploymentConfig",
             "apiVersion": "v1",
