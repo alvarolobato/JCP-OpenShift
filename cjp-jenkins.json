@@ -1,0 +1,194 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "cjp-jenkins-enterprise",
+    "creationTimestamp": null,
+    "annotations": {
+      "description": "Deployment template for CJP Jenkins Enterprise",
+      "iconClass": "icon-jenkins",
+      "tags": "instant-app, CJP, java, jenkins-enterprise"
+    }
+  },
+  "objects": [
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${JENKINS_SERVICE}",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins-enterprise"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    },
+                    {
+                        "name": "50000-tcp",
+                        "protocol": "TCP",
+                        "port": 50000,
+                        "targetPort": 50000
+                    }
+                ],
+                "selector": {
+                    "app": "jenkins-enterprise",
+                    "deploymentconfig": "${JENKINS_SERVICE}"
+                }
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+          "kind": "Route",
+          "apiVersion": "v1",
+          "metadata": {
+            "name": "${JENKINS_SERVICE}",
+            "creationTimestamp": null
+          },
+          "spec": {
+            "host": "${PUBLIC_URL}",
+            "to": {
+              "kind": "Service",
+              "name": "${JENKINS_SERVICE}"
+             },
+             "port": {
+              "targetPort": "8080-tcp"
+             },
+             "tls": {
+                "termination": "edge",
+                "insecureEdgeTerminationPolicy": "Allow"
+             }
+          }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${JENKINS_SERVICE}",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins-enterprise"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "resources": {}
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "jenkins-enterprise"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "jenkins-enterprise:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "test": false,
+                "selector": {
+                    "app": "jenkins-enterprise",
+                    "deploymentconfig": "${JENKINS_SERVICE}"
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "jenkins-enterprise",
+                            "deploymentconfig": "${JENKINS_SERVICE}"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "jenkins-volume-1",
+                                "persistentVolumeClaim":{
+                                    "claimName": "${JENKINS_SERVICE}"
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "jenkins-enterprise",
+                                "image": "jenkins-enterprise:latest",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "containerPort": 50000,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {},
+                                "volumeMounts": [
+                                    {
+                                        "name": "jenkins-volume-1",
+                                        "mountPath": "/var/jenkins_home"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "status": {}
+        },
+
+        {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "${JENKINS_SERVICE}",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "${JENKINS_STORAGE}"
+                    }
+                }
+            },
+            "status": {}
+        }
+    ],
+  "parameters": [
+    {
+      "name": "PUBLIC_URL",
+      "description": "Public URL to map the application. Leave blank for generated name",
+      "value": ""
+    },
+    {
+      "name": "JENKINS_SERVICE",
+      "description": "Jenkins Service Name - Change to have multiple instances",
+      "value": "jenkins"
+    },
+    {
+      "name": "JENKINS_STORAGE",
+      "description": "Allocated storage for the Cloudbees Jenkins Enterprise service",
+      "value": "20Gi"
+    }
+  ],
+  "labels": {
+    "template": "jenkins"
+  }
+}

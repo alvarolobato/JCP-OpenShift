@@ -1,0 +1,440 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "name": "cjp-ops-center-and-base-images",
+    "creationTimestamp": null,
+    "annotations": {
+      "description": "Deployment template for CJP Jenkins Operations Center, Elastic Search and base images",
+      "iconClass": "icon-jenkins",
+      "tags": "instant-app, CloudBees, CJP, java, jenkins-ops-center, elasticsearch"
+    }
+  },
+  "objects": [
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins-ops-center",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins-ops-center"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "8080-tcp",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 8080
+                    },
+                    {
+                        "name": "50000-tcp",
+                        "protocol": "TCP",
+                        "port": 50000,
+                        "targetPort": 50000
+                    }
+                ],
+                "selector": {
+                    "app": "jenkins-ops-center",
+                    "deploymentconfig": "jenkins-ops-center"
+                }
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+          "kind": "Route",
+          "apiVersion": "v1",
+          "metadata": {
+            "name": "joc",
+            "creationTimestamp": null
+          },
+          "spec": {
+            "host": "${PUBLIC_URL}",
+            "to": {
+                "kind": "Service",
+                "name": "jenkins-ops-center"
+             },
+             "port": {
+                "targetPort": "8080-tcp"
+             },
+             "tls": {
+                "termination": "edge",
+                "insecureEdgeTerminationPolicy": "Allow"
+             }
+          }
+        },
+
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins-ops-center",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins-ops-center"
+                },
+                "annotations": {
+                }
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "latest",
+                        "annotations": {
+                            "openshift.io/imported-from": "cloudbees/jenkins-operations-center"
+                        },
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "cloudbees/jenkins-operations-center"
+                        },
+                        "generation": null,
+                        "importPolicy": {}
+                    }
+                ]
+            },
+            "status": {
+                "dockerImageRepository": ""
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins-ops-center",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins-ops-center"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "resources": {}
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "jenkins-ops-center"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "jenkins-ops-center:latest"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "test": false,
+                "selector": {
+                    "app": "jenkins-ops-center",
+                    "deploymentconfig": "jenkins-ops-center"
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "jenkins-ops-center",
+                            "deploymentconfig": "jenkins-ops-center"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "jenkins-ops-center-volume-1",
+                                "persistentVolumeClaim":{
+                                    "claimName": "joc-claim"
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "jenkins-ops-center",
+                                "image": "cloudbees/jenkins-operations-center",
+                                "ports": [
+                                    {
+                                        "containerPort": 8080,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "containerPort": 50000,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "env": [
+                                  {
+                                    "name": "JAVA_OPS",
+                                    "value": "-Dhudson.TcpSlaveAgentListener.hostName=jenkins-ops-center.cjp.svc.cluster.local"
+                                  }
+                                ],
+                                "resources": {},
+                                "volumeMounts": [
+                                    {
+                                        "name": "jenkins-ops-center-volume-1",
+                                        "mountPath": "/var/jenkins_home"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            },
+            "status": {}
+        },
+
+        {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "joc-claim",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "${CJOC_STORAGE}"
+                    }
+                }
+            },
+            "status": {}
+        },
+        {
+            "kind": "Service",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "elasticsearch",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "elasticsearch"
+                }
+            },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "9200-tcp",
+                        "protocol": "TCP",
+                        "port": 9200,
+                        "targetPort": 9200
+                    },
+                    {
+                        "name": "9300-tcp",
+                        "protocol": "TCP",
+                        "port": 9300,
+                        "targetPort": 9300
+                    }
+                ],
+                "selector": {
+                    "app": "elasticsearch",
+                    "deploymentconfig": "elasticsearch"
+                },
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "elasticsearch",
+                "generation": 2,
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "elasticsearch"
+                },
+                "annotations": {
+                }
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "1.7.5",
+                        "annotations": {
+                            "openshift.io/imported-from": "elasticsearch"
+                        },
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "elasticsearch:1.7.5"
+                        },
+                        "generation": null,
+                        "importPolicy": {}
+                    }
+                ]
+            },
+            "status": {
+                "dockerImageRepository": ""
+            }
+        },
+        {
+            "kind": "DeploymentConfig",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "elasticsearch",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "elasticsearch"
+                }
+            },
+            "spec": {
+                "strategy": {
+                    "resources": {}
+                },
+                "triggers": [
+                    {
+                        "type": "ConfigChange"
+                    },
+                    {
+                        "type": "ImageChange",
+                        "imageChangeParams": {
+                            "automatic": true,
+                            "containerNames": [
+                                "elasticsearch"
+                            ],
+                            "from": {
+                                "kind": "ImageStreamTag",
+                                "name": "elasticsearch:1.7.5"
+                            }
+                        }
+                    }
+                ],
+                "replicas": 1,
+                "test": false,
+                "selector": {
+                    "app": "elasticsearch",
+                    "deploymentconfig": "elasticsearch"
+                },
+                "template": {
+                    "metadata": {
+                        "creationTimestamp": null,
+                        "labels": {
+                            "app": "elasticsearch",
+                            "deploymentconfig": "elasticsearch"
+                        }
+                    },
+                    "spec": {
+                        "volumes": [
+                            {
+                                "name": "elasticsearch-volume-1",
+                                "persistentVolumeClaim": {
+                                    "claimName": "elasticsearch-claim"
+                                }
+                            }
+                        ],
+                        "containers": [
+                            {
+                                "name": "elasticsearch",
+                                "image": "elasticsearch",
+                                "ports": [
+                                    {
+                                        "containerPort": 9200,
+                                        "protocol": "TCP"
+                                    },
+                                    {
+                                        "containerPort": 9300,
+                                        "protocol": "TCP"
+                                    }
+                                ],
+                                "resources": {},
+                                "volumeMounts": [
+                                    {
+                                        "name": "elasticsearch-volume-1",
+                                        "mountPath": "/usr/share/elasticsearch/data"
+                                    }
+                                ],
+                                "terminationMessagePath": "/dev/termination-log",
+                                "imagePullPolicy": "Always"
+                            }
+                        ],
+                        "restartPolicy": "Always",
+                        "terminationGracePeriodSeconds": 30,
+                        "dnsPolicy": "ClusterFirst",
+                        "securityContext": {}
+                    }
+                }
+            },
+            "status": {}
+        },
+        {
+            "kind": "PersistentVolumeClaim",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "elasticsearch-claim",
+                "creationTimestamp": null
+            },
+            "spec": {
+                "accessModes": [
+                    "ReadWriteOnce"
+                ],
+                "resources": {
+                    "requests": {
+                        "storage": "${ELASTIC_SEARCH_STORAGE}"
+                    }
+                }
+            },
+            "status": {}
+        },
+        {
+            "kind": "ImageStream",
+            "apiVersion": "v1",
+            "metadata": {
+                "name": "jenkins-enterprise",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "jenkins-enterprise"
+                },
+                "annotations": {
+                }
+            },
+            "spec": {
+                "tags": [
+                    {
+                        "name": "latest",
+                        "from": {
+                            "kind": "DockerImage",
+                            "name": "cloudbees/jenkins-enterprise"
+                        },
+                        "generation": null,
+                        "importPolicy": {}
+                    }
+                ]
+            },
+            "status": {
+                "dockerImageRepository": ""
+            }
+        }
+    ],
+  "parameters": [
+    {
+      "name": "PUBLIC_URL",
+      "description": "Public URL to map the application. Leave blank for generated name",
+      "value": ""
+    },
+    {
+      "name": "CJOC_STORAGE",
+      "description": "Allocated storage for the Cloudbees Jenkins Operations Center service",
+      "value": "20Gi"
+    },
+    {
+      "name": "ELASTIC_SEARCH_STORAGE",
+      "description": "Allocated storage for the Elastic Search service",
+      "value": "20Gi"
+    }
+    
+  ],
+  "labels": {
+    "template": "jenkins-ops-center"
+  }
+}
